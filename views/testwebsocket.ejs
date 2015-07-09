@@ -1,0 +1,122 @@
+<html>
+
+    <head>
+        <script src="/javascripts/jquery_mini.js" type="text/javascript" charset="utf-8"></script>
+
+    </head>
+
+    <body class='bodybkgrd'>
+        <button id="idBtReport" onclick='report()'>report</button>
+        <input type="text" id="idTxReport">
+        <br>
+        <button id="idButton" onclick='sendmsg()'>sendmsg</button>
+        <input type="text" id="message" autocomplete="off" autofocus>
+        To:<input tyep="text" id='idTxtTo'>
+        <button  onclick='sendLocation()'>sendloaction</button>
+        <br>
+        <button  onclick='test()'>test</button>
+        <br>
+        <p id="console">
+        console msg 2
+        </p>
+
+        <script language="javascript">
+            function showTab(liobj, liname) {}
+            function log(msg) {
+                $("#console").html(msg+"<br>"+$("#console").html())
+            }
+            var wsServer = 'ws://121.43.234.157:5050';
+
+            log("hello 2");
+            var  websocket = new WebSocket(wsServer); 
+            log("websocket="+websocket);
+            websocket.onopen = function (evt) { onOpen(evt) }; 
+            websocket.onclose = function (evt) { onClose(evt) }; 
+            websocket.onmessage = function (evt) { onMessage(evt) }; 
+            websocket.onerror = function (evt) { onError(evt) }; 
+            function onOpen(evt) { 
+                log("Connected to WebSocket server."); 
+            } 
+            function onClose(evt) { 
+                log("Disconnected"); 
+            } 
+            function onMessage(evt) { 
+                log('Retrieved data from server: ' + evt.data); 
+                var js=eval ("(" + evt.data + ")")
+                //var js=JSON.parse(evt.data)
+                log('js.Msgtype='+js.Msgtype)
+                var msg=decodeURIComponent(js.Msg)
+                if (js.Msgtype=="location"){
+                    var jslocate=JSON.parse(msg)
+                    log("jslocate="+JSON.stringify(jslocate))
+                }
+            } 
+            function onError(evt) { 
+                log('Error occured: ' + evt.data); 
+            }
+            function sendmsg(){
+                var message = $('#message').val()
+                $('#message').val('')
+                var submsg={
+                    subtype:"msg",
+                    msg:message
+                }
+
+                var msg={
+                    type:"send",
+                    to:$("#idTxtTo").val(),
+                    Msgtype:"msg",
+                    msg:encodeURIComponent(message)
+                }
+                websocket.send(JSON.stringify(msg))
+            }
+            function test(){
+                var js={
+                    toptype:"istoptype",
+                    subjs:{
+                        subElement:"isSubJsElement"
+                    }
+                }
+                var jsstr=JSON.stringify(js)
+                log("nest js string="+jsstr)
+                var jseval=eval ("(" + jsstr + ")")
+                var jsdata=JSON.parse(jsstr)
+                log("jsdata.toptype="+jsdata.toptype)
+
+                var tstd=$("#message").val()
+                jseval=eval ("(" + tstd + ")")
+                jsdata=JSON.parse(tstd)
+                log("jsdata.toptype="+jsdata.toptype)
+            }
+            function sendLocation(){
+                var message = $('#message').val()
+                var arr=new Array()
+                arr=message.split(",")
+                var jslocate={
+                    longitude:parseFloat(arr[0]),
+                    latitude:parseFloat(arr[1])
+                }
+                var msg={
+                    type:"send",
+                    to:$("#idTxtTo").val(),
+                    Msgtype:"location",
+                    msg:encodeURIComponent(JSON.stringify(jslocate))
+                }
+                websocket.send(JSON.stringify(msg))
+
+            }
+
+            function report(){
+                var msg={
+                    type:"report",
+                    user:$("#idTxReport").val(),
+                }
+                log("reporting")
+                websocket.send(JSON.stringify(msg))
+                log("reported")
+            }
+        </script>
+
+    </body>
+
+</html>
