@@ -10,7 +10,25 @@ var users = require('./routes/users');
 
 var app = express();
 var http = require('http').Server(app);
-var sio = require('socket.io');
+
+var WebSocket = require('faye-websocket');
+http.on('upgrade', function(request, socket, body) {
+    if (WebSocket.isWebSocket(request)) {
+        console.log("socket conneted");
+        var ws = new WebSocket(request, socket, body);
+
+        ws.on('message', function(event) {
+            console.log("get mesg");
+            //ws.send(event.data);
+        });
+
+        ws.on('close', function(event) {
+            console.log('close', event.code, event.reason);
+            ws = null;
+        });
+    }
+});
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -58,32 +76,6 @@ app.use(function(err, req, res, next) {
     message: err.message,
     error: {}
   });
-});
-
-var io=sio.listen(http);
-console.log("next process websocket");
-io.sockets.on('connection', function(socket){
-    console.log("connected");
-    socket.on('login', function(obj){
-        socket.name = obj.userid;
-        io.emit('login', {onlineUsers:onlineUsers, onlineCount:onlineCount, user:obj});
-        console.log(obj.username+'加入了聊天室');
-    });
-    
-    socket.on('connect', function(){
-        console.log("connect");
-    });
-
-
-    socket.on('disconnect', function(){
-        console.log("disconnect");
-    });
-
-    socket.on('message', function(obj){
-        io.emit('message', obj);
-        console.log(obj.username+'说：'+obj.content);
-    });
-
 });
 
 
