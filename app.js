@@ -59,6 +59,22 @@ app.use(function(err, req, res, next) {
 });
 
 
+io.on('connection', function(socket){
+    socket.on('login', function(obj){
+        socket.name = obj.userid;
+        io.emit('login', {onlineUsers:onlineUsers, onlineCount:onlineCount, user:obj});
+        console.log(obj.username+'加入了聊天室');
+    });
+    socket.on('disconnect', function(){
+    });
+
+    socket.on('message', function(obj){
+        io.emit('message', obj);
+        console.log(obj.username+'说：'+obj.content);
+    });
+
+});
+
 module.exports = app;
 
 http.listen(5050, function(){
