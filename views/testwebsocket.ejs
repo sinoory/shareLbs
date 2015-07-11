@@ -41,7 +41,8 @@
                 log("Disconnected"); 
             } 
             function onMessage(evt) { 
-                log('Retrieved data from server: ' + evt.data); 
+                log('Retrieved data from server: ')
+                log(evt.data); 
                 var js=eval ("(" + evt.data + ")")
                 //var js=JSON.parse(evt.data)
                 log('js.Msgtype='+js.Msgtype)
