@@ -1,6 +1,9 @@
 
 module.exports = function BusBus(){
     var WebSocket = require('faye-websocket');
+    var users={};
+    var appAuthMongOpr=require('tools/authdbOpr');
+    var busLineMongOpr=require("tools/linesDbOpr");
 
     this.processNewWebCient=function(request, socket, body){
         console.log("socket conneted");
