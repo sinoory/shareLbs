@@ -42,8 +42,23 @@ module.exports = function BusBus(){
                 });
                 //ws.send("you are "+js.APP);
             }else if(msg.type=="uploadLine"){
-                console.log("uploadLine line=",msg.name);
+                console.log("uploadLine line=",msg.name,"stations=",msg.stations);
                 busLineMongOpr.add({ownerid:msg.ownerid,name:msg.name,stations:msg.stations},null);
+                ws.send(JSON.stringify({"type":"re-uploadLine","res":"success"}))
+            }else if(msg.type=="getlines"){
+                console.log("client getlines");
+                busLineMongOpr.getAll({},'',function(err,docs){
+                    var resp={"type":"re-getlines"};
+                    var res=new Array();
+                    resp.res=res;
+                    var d;
+                    console.log("getlines cnt=",docs.length);
+                    for(var i=0;i<docs.length;i++){
+                        d=docs[i];
+                        res.push({"name":d.name,"ownerid":d.ownerid,"stations":d.stations})
+                    }
+                    ws.send(JSON.stringify(resp));
+                });
             }else{
                 console.log("not supported msg.type="+msg.type);
             }
