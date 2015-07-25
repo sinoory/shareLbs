@@ -11,7 +11,6 @@ module.exports = function BusBus(){
         var ws = new WebSocket(request, socket, body);
         var me="";
         ws.on('message', function(event) {
-            console.log("get msg="+event.data);
             var msg=JSON.parse(event.data);
             if(msg.type=="report"){
                 users[msg.user]={'ws':ws};
@@ -42,6 +41,9 @@ module.exports = function BusBus(){
                     }
                 });
                 //ws.send("you are "+js.APP);
+            }else if(msg.type=="uploadLine"){
+                console.log("uploadLine line=",msg.name);
+                busLineMongOpr.add({ownerid:msg.ownerid,name:msg.name,stations:msg.stations},null);
             }else{
                 console.log("not supported msg.type="+msg.type);
             }
