@@ -4,6 +4,7 @@ module.exports = function BusBus(){
     var users={};
     var appAuthMongOpr=require('tools/authdbOpr');
     var busLineMongOpr=require("tools/linesDbOpr");
+    var hashopr=require("tools/hashdbOpr");
 
     this.processNewWebCient=function(request, socket, body){
         console.log("socket conneted");
@@ -22,6 +23,25 @@ module.exports = function BusBus(){
                }else{
                    console.log("user "+msg.to+" not exist");
                }
+            }else if(msg.type=="querryid"){
+                var js=JSON.parse(msg.devid);
+                console.log("querryid js.APP=",js.APP);
+                appAuthMongOpr.getOne({mobinfo:msg.devid},function(err,doc){
+                    if(doc){
+                        ws.send(JSON.stringify(
+                            {"type":"re-querryid","userid":doc.userid,"nickname":doc.nickname}));
+                    }else{
+                        hashopr.getRandomOne(function(e,doc){
+                            console.log("getRandomOne e=",e,",doc=",doc);
+                            appAuthMongOpr.add({mobinfo:msg.devid,mobStuctinfo:js,
+                                userid:doc.hashval,verifycode:doc.hashverify,
+                                addate:new Date()},null);
+                            ws.send(JSON.stringify(
+                             {"type":"re-querryid","userid":doc.userid,"nickname":doc.nickname}));
+                        });                  
+                    }
+                });
+                //ws.send("you are "+js.APP);
             }else{
                 console.log("not supported msg.type="+msg.type);
             }
