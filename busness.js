@@ -44,7 +44,7 @@ module.exports = function BusBus(){
                 });
                 //ws.send("you are "+js.APP);
             }else if(msg.type=="uploadLine"){
-                console.log("uploadLine line=",msg.name,"stations=",msg.stations);
+                console.log("uploadLine line=",msg.name,",ownerid=",msg.ownerid,"stations=",msg.stations);
                 busLineMongOpr.add({ownerid:msg.ownerid,name:msg.name,stations:msg.stations},null);
                 ws.send(JSON.stringify({"type":"re-uploadLine","res":"success"}))
             }else if(msg.type=="getlines"){
@@ -57,9 +57,13 @@ module.exports = function BusBus(){
                     console.log("getlines cnt=",docs.length);
                     for(var i=0;i<docs.length;i++){
                         d=docs[i];
-                        res.push({"name":d.name,"ownerid":d.ownerid,"stations":d.stations})
+                        res.push({"name":d.name,"ownerid":d.ownerid,"stations":d.stations,"lineid":d._id})
                     }
                     ws.send(JSON.stringify(resp));
+                });
+            }else if(msg.type=="delline"){
+                busLineMongOpr.del({_id:msg.lineid},function(err,cnt){
+                    console.log("delline id="+msg.lineid+",cnt="+cnt+",err="+err);
                 });
             }else{
                 console.log("not supported msg.type="+msg.type);
