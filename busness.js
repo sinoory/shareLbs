@@ -1,7 +1,7 @@
 
 module.exports = function BusBus(){
     var WebSocket = require('faye-websocket');
-    var users={};
+    var onlineUsers={};//{userid:{'ws':ws,...} ...}
     var appAuthMongOpr=require('tools/authdbOpr');
     var busLineMongOpr=require("tools/linesDbOpr");
     var busOnLineOpr=require("tools/onlinesDbOpr");
@@ -12,13 +12,15 @@ module.exports = function BusBus(){
         var ws = new WebSocket(request, socket, body);
         var me="";
         ws.on('message', function(event) {
+            console.log("c msg="+event.data);
             var msg=JSON.parse(event.data);
-            if(msg.type=="report"){
-                users[msg.user]={'ws':ws};
-                me=msg.user;
+            if(msg.type=="online"){
+                onlineUsers[msg.userid]={'ws':ws};
+                me=msg.userid;
+                console.log(me+" is online");
             }else if(msg.type=="send"){
-               if(msg.to in users){
-                   var res=users[msg.to].ws.send(JSON.stringify(msg));
+               if(msg.to in onlineUsers){
+                   var res=onlineUsers[msg.to].ws.send(JSON.stringify(msg));
                    console.log("msg send to "+msg.to+" finished,res="+res);
                }else{
                    console.log("user "+msg.to+" not exist");
@@ -65,6 +67,26 @@ module.exports = function BusBus(){
                 busLineMongOpr.del({_id:msg.lineid},function(err,cnt){
                     console.log("delline id="+msg.lineid+",cnt="+cnt+",err="+err);
                 });
+            }else if(msg.type=='runbus'){
+                if(msg.action=='start'){
+                    busOnLineOpr.getOne({lineid:msg.lineid},function(err,line){
+                        if(line){
+                            busOnLineOpr.start(line,msg.startInd);//start Index
+                            busOnLineOpr.notifyStart(onlineUsers,line);
+                        }else{
+                            busOnLineOpr.addnew(msg);
+                        }
+                    });
+                }else if(msg.action=='stUpdate'){
+                    busOnLineOpr.stationUpdate(msg);
+                }else if(msg.action=='stop'){
+                    busOnLineOpr.stop();
+                }
+            }else if(msg.type=='watchline'){
+                busOnLineOpr.getOne({lineid:msg.lineid},function(err,line){
+                    line.watchers.push(msg.watcher);
+                    line.save();
+                });
             }else{
                 console.log("not supported msg.type="+msg.type);
             }
@@ -74,7 +96,7 @@ module.exports = function BusBus(){
         ws.on('close', function(event) {
             console.log('close', event.code, event.reason);
             console.log(me+" closed");
-            delete users[me];
+            delete onlineUsers[me];
             ws = null;
         });
 
