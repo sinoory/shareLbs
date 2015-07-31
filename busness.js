@@ -78,13 +78,14 @@ module.exports = function BusBus(){
                         }
                     });
                 }else if(msg.action=='stUpdate'){
-                    busOnLineOpr.stationUpdate(msg);
+                    busOnLineOpr.stationUpdate(msg,onlineUsers);
                 }else if(msg.action=='stop'){
                     busOnLineOpr.stop();
                 }
             }else if(msg.type=='watchline'){
                 busOnLineOpr.getOne({lineid:msg.lineid},function(err,line){
                     line.watchers.push(msg.watcher);
+                    onlineUsers[me].watchline=msg.lineid;
                     line.save();
                 });
             }else{
@@ -96,6 +97,7 @@ module.exports = function BusBus(){
         ws.on('close', function(event) {
             console.log('close', event.code, event.reason);
             console.log(me+" closed");
+            busOnLineOpr.rmWatcher(me,onlineUsers);
             delete onlineUsers[me];
             ws = null;
         });
