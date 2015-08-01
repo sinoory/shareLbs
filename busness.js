@@ -14,7 +14,7 @@ module.exports = function BusBus(){
         ws.on('message', function(event) {
             console.log("c msg="+event.data);
             var msg=JSON.parse(event.data);
-            if(msg.type=="online"){
+            if(msg.type=="online"){//user report online status
                 onlineUsers[msg.userid]={'ws':ws};
                 me=msg.userid;
                 console.log(me+" is online");
@@ -46,8 +46,11 @@ module.exports = function BusBus(){
                 });
                 //ws.send("you are "+js.APP);
             }else if(msg.type=="uploadLine"){
-                console.log("uploadLine line=",msg.name,",ownerid=",msg.ownerid,"stations=",msg.stations);
+                console.log("uploadLine line=",msg.name,",ownerid=",msg.ownerid);
                 busLineMongOpr.add({ownerid:msg.ownerid,name:msg.name,stations:msg.stations},null);
+                busLineMongOpr.getOne({ownerid:msg.ownerid},function(e,l){
+                    console.log("uploadLine added line.ownerid=",l.ownerid,",e="+e);
+                });
                 ws.send(JSON.stringify({"type":"re-uploadLine","res":"success"}))
             }else if(msg.type=="getlines"){
                 console.log("client getlines");
@@ -84,10 +87,15 @@ module.exports = function BusBus(){
                 }
             }else if(msg.type=='watchline'){
                 busOnLineOpr.getOne({lineid:msg.lineid},function(err,line){
+                    if(!line) return;
                     line.watchers.push(msg.watcher);
                     onlineUsers[me].watchline=msg.lineid;
                     line.save();
                 });
+            }else if(msg.type=='unwatchline'){
+                busOnLineOpr.rmWatcher(me,onlineUsers);
+            }else if(msg.type=='linechat'){
+                busOnLineOpr.onLineChat(msg,onlineUsers);
             }else{
                 console.log("not supported msg.type="+msg.type);
             }
