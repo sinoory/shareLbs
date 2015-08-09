@@ -46,12 +46,28 @@ module.exports = function BusBus(){
                 });
                 //ws.send("you are "+js.APP);
             }else if(msg.type=="uploadLine"){
-                console.log("uploadLine line=",msg.name,",ownerid=",msg.ownerid);
-                busLineMongOpr.add({ownerid:msg.ownerid,name:msg.name,stations:msg.stations},null);
-                busLineMongOpr.getOne({ownerid:msg.ownerid},function(e,l){
-                    console.log("uploadLine added line.ownerid=",l.ownerid,",e="+e);
+                console.log("uploadLine line=",msg.name,",ownerid=",msg.ownerid,",exist="+msg.exist);
+                if(msg.exist){
+                    busLineMongOpr.getOne({_id:msg.lineid},function(e,l){
+                        console.log("updateLine added line.ownerid=",l.ownerid,",e="+e);
+                        if(l){
+                            l.lver=msg.lver;
+                            l.name=msg.name;
+                            l.stations=msg.stations;
+                            l.save();
+                            ws.send(JSON.stringify({"type":"re-uploadLine","err":e,"subtype":"update"}));
+                        }
+                    });
+                    return;
+                }
+                busLineMongOpr.add({ownerid:msg.ownerid,name:msg.name,stations:msg.stations,lver:msg.lver},function(){
+                    busLineMongOpr.getOne({ownerid:msg.ownerid,name:msg.name,lver:msg.lver},function(e,l){
+                        console.log("uploadLine added line=",l._id,",e="+e);
+                        if(l){
+                            ws.send(JSON.stringify({"type":"re-uploadLine","err":e,"lineid":l._id,"subtype":"upload"}));
+                        }
+                    });
                 });
-                ws.send(JSON.stringify({"type":"re-uploadLine","res":"success"}))
             }else if(msg.type=="getlines"){
                 console.log("client getlines");
                 busLineMongOpr.getAll({},'',function(err,docs){
