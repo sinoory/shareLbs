@@ -40,11 +40,13 @@ app.use('/users', users);
 var testwebsocket=require('./routes/testwebsocket');
 app.use('/testwebsocket',testwebsocket);
 
+var catch404 = require('./routes/testurl')
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
   err.status = 404;
-  next(err);
+  catch404(req,res);
+  //next(err);
 });
 
 // error handlers

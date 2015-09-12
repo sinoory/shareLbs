@@ -30,7 +30,7 @@ module.exports = function BusBus(){
                 appAuthMongOpr.getOne({mobinfo:msg.devid},function(err,doc){
                     if(doc){
                         var res={"type":"re-querryid","userid":doc.userid,"nickname":doc.nickname};
-                        console.log(JSON.stringify(res));
+                        console.log('re-querryid old '+JSON.stringify(res)+",id="+doc.userid);
                         ws.send(JSON.stringify(res));
                     }else{
                         hashopr.getRandomOne(function(e,doc){
@@ -38,8 +38,8 @@ module.exports = function BusBus(){
                             appAuthMongOpr.add({mobinfo:msg.devid,mobStuctinfo:js,
                                 userid:doc.hashval,verifycode:doc.hashverify,
                                 addate:new Date()},null);
-                            var res={"type":"re-querryid","userid":doc.userid,"nickname":doc.nickname};
-                            console.log(JSON.stringify(res));
+                            var res={"type":"re-querryid","userid":doc.hashval,"nickname":doc.nickname};
+                            console.log('re-querryid new '+JSON.stringify(res)+',id='+doc.hashval);
                             ws.send(JSON.stringify(res));
                         });                  
                     }
