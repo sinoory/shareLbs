@@ -47,24 +47,24 @@ module.exports = function BusBus(){
                 //ws.send("you are "+js.APP);
             }else if(msg.type=="uploadLine"){
                 console.log("uploadLine line=",msg.name,",ownerid=",msg.ownerid,",exist="+msg.exist);
-                if(msg.exist){
+                if(msg.lineid && msg.lineid!='undefined'){
                     busLineMongOpr.getOne({_id:msg.lineid},function(e,l){
-                        console.log("updateLine added line.ownerid=",l.ownerid,",e="+e);
                         if(l){
+                            console.log("updateLine added line.ownerid=",l.ownerid,",e="+e);
                             l.lver=msg.lver;
                             l.name=msg.name;
                             l.stations=msg.stations;
                             l.save();
-                            ws.send(JSON.stringify({"type":"re-uploadLine","err":e,"subtype":"update"}));
+                            ws.send(JSON.stringify({"type":"re-uploadLine","err":e,"subtype":"update","index":msg.index}));
+                            return;
                         }
                     });
-                    return;
                 }
-                busLineMongOpr.add({ownerid:msg.ownerid,name:msg.name,stations:msg.stations,lver:msg.lver},function(){
+                busLineMongOpr.add({ownerid:msg.ownerid,name:msg.name,stations:msg.stations,lver:msg.lver,local:busLineMongOpr.getLocal(msg.area)},function(){
                     busLineMongOpr.getOne({ownerid:msg.ownerid,name:msg.name,lver:msg.lver},function(e,l){
-                        console.log("uploadLine added line=",l._id,",e="+e);
+                        console.log("uploadLine added line=",l,",e="+e);
                         if(l){
-                            ws.send(JSON.stringify({"type":"re-uploadLine","err":e,"lineid":l._id,"subtype":"upload"}));
+                            ws.send(JSON.stringify({"type":"re-uploadLine","err":e,"lineid":l._id,"index":msg.index,"subtype":"upload","area":l.local.adesc}));
                         }
                     });
                 });
@@ -78,7 +78,8 @@ module.exports = function BusBus(){
                     console.log("getlines cnt=",docs.length);
                     for(var i=0;i<docs.length;i++){
                         d=docs[i];
-                        res.push({"name":d.name,"ownerid":d.ownerid,"stations":d.stations,"lineid":d._id})
+                        console.log("getlines["+i+"]=",d);
+                        res.push({"name":d.name,"ownerid":d.ownerid,"stations":d.stations,"lineid":d._id,"area":d.local.adesc})
                     }
                     ws.send(JSON.stringify(resp));
                 });
