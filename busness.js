@@ -25,6 +25,8 @@ module.exports = function BusBus(){
                }else{
                    console.log("user "+msg.to+" not exist");
                }
+            }else if(msg.type=="querryline"){
+                busLineMongOpr.querryline(msg,ws);
             }else if(msg.type=="querryid"){
                 var js=JSON.parse(msg.devid);
                 appAuthMongOpr.getOne({mobinfo:msg.devid},function(err,doc){
@@ -45,6 +47,8 @@ module.exports = function BusBus(){
                     }
                 });
                 //ws.send("you are "+js.APP);
+            }else if(msg.type=="updateline"){//client require to get something new from server
+                busLineMongOpr.updateline(msg,ws);
             }else if(msg.type=="uploadLine"){
                 console.log("uploadLine line=",msg.name,",ownerid=",msg.ownerid,",exist="+msg.exist);
                 if(msg.lineid && msg.lineid!='undefined'){
@@ -70,19 +74,8 @@ module.exports = function BusBus(){
                 });
             }else if(msg.type=="getlines"){
                 console.log("client getlines");
-                busLineMongOpr.getAll({},'',function(err,docs){
-                    var resp={"type":"re-getlines"};
-                    var res=new Array();
-                    resp.res=res;
-                    var d;
-                    console.log("getlines cnt=",docs.length);
-                    for(var i=0;i<docs.length;i++){
-                        d=docs[i];
-                        console.log("getlines["+i+"]=",d);
-                        res.push({"name":d.name,"ownerid":d.ownerid,"stations":d.stations,"lineid":d._id,"area":d.local.adesc})
-                    }
-                    ws.send(JSON.stringify(resp));
-                });
+                msg={"type":"querryline","qtype":"byname","val":""};
+                busLineMongOpr.querryline(msg,ws);
             }else if(msg.type=="delline"){
                 busLineMongOpr.del({_id:msg.lineid},function(err,cnt){
                     console.log("delline id="+msg.lineid+",cnt="+cnt+",err="+err);
