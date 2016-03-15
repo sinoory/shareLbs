@@ -64,7 +64,7 @@ module.exports = function BusBus(){
                         }
                     });
                 }
-                busLineMongOpr.add({ownerid:msg.ownerid,name:msg.name,stations:msg.stations,lver:msg.lver,local:busLineMongOpr.getLocal(msg.area)},function(){
+                busLineMongOpr.add({ownerid:msg.ownerid,name:msg.name,stations:msg.stations,lver:msg.lver,local:busLineMongOpr.getLocal(msg.area),"desc":msg.desc},function(){
                     busLineMongOpr.getOne({ownerid:msg.ownerid,name:msg.name,lver:msg.lver},function(e,l){
                         console.log("uploadLine added line=",l,",e="+e);
                         if(l){
